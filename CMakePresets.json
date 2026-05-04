@@ -1,0 +1,25 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "9800X3D-Clang-Ninja",
+            "displayName": "Clang 19 (Ninja) - Zen 5 Optimized",
+            "description": "High-performance build using clang-cl and Ninja generator",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/Llvm/x64/bin/clang-cl.exe",
+                "CMAKE_CXX_COMPILER": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/Llvm/x64/bin/clang-cl.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Release",
+            "configurePreset": "9800X3D-Clang-Ninja",
+            "configuration": "Release"
+        }
+    ]
+}
