@@ -1,0 +1,166 @@
+name: Build and Pedantic Workflow
+
+on:
+  push:
+    branches: [ main, boilerplate ]
+  pull_request:
+    branches: [ main, boilerplate ]
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+
+    - name: Install LLVM (Clang) on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format clang-tidy cppcheck cmake ninja-build
+        echo "Clang tools installed on Ubuntu"
+      shell: bash
+
+    - name: Install LLVM (Clang) on Windows
+      if: runner.os == 'Windows'
+      run: |
+        choco install llvm cppcheck -y
+        echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+        echo "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
+      shell: pwsh
+
+    - name: Create virtual environment and install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+        echo "Dependencies installed on Ubuntu"
+      shell: bash
+
+    - name: Create virtual environment and install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m venv venv
+        venv\Scripts\Activate.ps1
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+        echo "Dependencies installed on Windows"
+      shell: pwsh
+
+    - name: Build the C++ extension
+      run: make build
+      shell: pwsh
+
+    - name: "Build completed on ${{ matrix.os }}"
+      run: |
+        Write-Host "============================================"
+        Write-Host "   BUILD COMPLETED: ${{ matrix.os }}"
+        Write-Host "============================================"
+      shell: pwsh
+
+  pedantic-checks:
+    runs-on: ${{ matrix.os }}
+    needs: build  # This ensures pedantic runs AFTER build completes
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+
+    - name: Install LLVM (Clang) on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format clang-tidy cppcheck
+        echo "Clang tools installed on Ubuntu"
+      shell: bash
+
+    - name: Install LLVM (Clang) on Windows
+      if: runner.os == 'Windows'
+      run: |
+        choco install llvm cppcheck -y
+        echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+        echo "C:\ProgramData\chocolatey\bin" >> $env:GITHUB_PATH
+      shell: pwsh
+
+    - name: Create virtual environment and install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+      shell: bash
+
+    - name: Create virtual environment and install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m venv venv
+        venv\Scripts\Activate.ps1
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+      shell: pwsh
+
+    - name: "[1/6] Run clang-format (C++ style check)"
+      run: |
+        source venv/bin/activate || venv\Scripts\Activate.ps1
+        clang-format --dry-run --Werror --style=file:.clang/.clang-format engine.cpp
+      shell: pwsh
+
+    - name: "[2/6] Run clang-tidy (C++ logic/perf check)"
+      run: |
+        source venv/bin/activate || venv\Scripts\Activate.ps1
+        cmake -B build -S . --preset 9800X3D-Clang-Ninja
+        $runClangTidy = python -c "import os, pathlib; names=('run-clang-tidy', 'run-clang-tidy.py', 'run-clang-tidy.exe'); print(next(str(pathlib.Path(directory) / name) for directory in os.environ.get('PATH', '').split(os.pathsep) if directory for name in names if (pathlib.Path(directory) / name).is_file()))"
+        python $runClangTidy -j=16 -config-file=.clang/.clang-tidy -warnings-as-errors="*" -p=build -- -std=c++2c -march=znver5 engine.cpp
+      shell: pwsh
+
+    - name: "[3/6] Run cppcheck (C++ safety check)"
+      run: |
+        source venv/bin/activate || venv\Scripts\Activate.ps1
+        cppcheck --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem engine.cpp
+      shell: pwsh
+
+    - name: "[4/6] Run ruff format (Python style check)"
+      run: |
+        source venv/bin/activate || venv\Scripts\Activate.ps1
+        ruff format --check --diff trading_bot.py test_error.py
+      shell: pwsh
+
+    - name: "[5/6] Run ruff check (Python linting)"
+      run: |
+        source venv/bin/activate || venv\Scripts\Activate.ps1
+        ruff check trading_bot.py test_error.py
+      shell: pwsh
+
+    - name: "[6/6] Run mypy (Python type check)"
+      run: |
+        source venv/bin/activate || venv\Scripts\Activate.ps1
+        mypy trading_bot.py test_error.py
+      shell: pwsh
+
+    - name: "All pedantic checks passed on ${{ matrix.os }}!"
+      run: |
+        Write-Host "============================================"
+        Write-Host "   ALL PEDANTIC CHECKS PASSED: ${{ matrix.os }}"
+        Write-Host "============================================"
+      shell: pwsh
