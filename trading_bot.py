@@ -14,9 +14,9 @@ import asyncio
 # ============================================
 class PriceBuffer:
     """Pre-allocated, reusable price buffer for zero-allocation trading"""
-    def __init__(self, max_size: int = 10000, dtype: np.dtype | type = np.float64):
-        # Pre-allocate with alignment-friendly size
-        self._buffer = np.zeros(max_size, dtype)
+    def __init__(self, max_size: int = 10000, dtype: np.dtype = np.dtype(np.float64)):
+        # Create 64-byte aligned buffer from the start
+        self._buffer = create_aligned_array(max_size, dtype)
         self._size = 0
         self._max_size = max_size
 
@@ -59,12 +59,11 @@ class PriceBuffer:
         """Get 64-byte aligned array for AVX-512"""
         arr = self.data
         if (arr.ctypes.data % 64) != 0:
-            # Create aligned copy if not already aligned
-            aligned = np.empty_like(arr, order='C')
+            # Create properly aligned copy using the alignment function
+            aligned = create_aligned_array(len(arr), arr.dtype)
             np.copyto(aligned, arr)
             return aligned
         return arr
-
 
 # ============================================
 # 2. ALIGNMENT: 64-byte aligned arrays
@@ -80,31 +79,8 @@ def create_aligned_array(size: int, dtype: np.dtype | str | type = np.float64) -
 
     return aligned_buf
 
-
 # ============================================
-# 3. CONTIGUITY: Check before passing to C++
-# ============================================
-def ensure_contiguous(arr: np.ndarray) -> np.ndarray:
-    """Ensure array is C-contiguous, copy if needed"""
-    if not arr.flags['C_CONTIGUOUS']:
-        print("Warning: Array not C-contiguous, copying...")
-        return np.ascontiguousarray(arr)
-    return arr
-
-
-# ============================================
-# 4. TYPING: Verify dtype matches C++ double
-# ============================================
-def verify_dtype(arr: np.ndarray) -> np.ndarray:
-    """Verify and convert dtype to np.float64 if needed"""
-    if arr.dtype != np.float64:
-        print(f"Warning: Converting dtype from {arr.dtype} to float64")
-        return arr.astype(np.float64)
-    return arr
-
-
-# ============================================
-# 5. ASYNC: WebSocket streaming for Alpaca
+# 3. ASYNC: WebSocket streaming for Alpaca
 # ============================================
 class AlpacaStreamClient:
     """Async WebSocket client for Alpaca market data"""
@@ -126,31 +102,54 @@ class AlpacaStreamClient:
 
         print(f"Buffered {buffer.size} prices")
 
-
 # ============================================
 # Main Trading Logic (Optimized)
 # ============================================
+def check_buffer_health(prices_arr: np.ndarray) -> None:
+    """The Triple-Check: Dtype, Alignment, and Contiguity."""
+
+    # 1. Dtype Check
+    expected_dtype = np.dtype(np.float64)
+    is_correct_type = (prices_arr.dtype == expected_dtype)
+    if is_correct_type:
+        print(f"✅ Dtype Check Passed: {prices_arr.dtype}")
+    else:
+        print(f"❌ Dtype Check Failed: Got {prices_arr.dtype}, expected {expected_dtype}")
+        raise TypeError(f"Dtype Error: Got {prices_arr.dtype}, expected {expected_dtype}")
+
+    # 2. Alignment Check
+    alignment = prices_arr.ctypes.data % 64
+    if alignment == 0:
+        print("✅ Python Side: 64-byte Alignment Verified")
+    else:
+        print(f"❌ Alignment Check Failed: Address {hex(prices_arr.ctypes.data)} is not 64-byte aligned (alignment={alignment} bytes)")
+        raise MemoryError(
+            f"Performance Contract Broken: Unaligned memory at address {hex(prices_arr.ctypes.data)} (alignment={alignment} bytes, expected 0)"
+        )
+
+    # 3. Contiguity Check
+    is_contiguous = prices_arr.flags['C_CONTIGUOUS']
+    if is_contiguous:
+        print("✅ Contiguity Check Passed: Array is C-contiguous")
+    else:
+        print("❌ Contiguity Check Failed: Array is not C-contiguous")
+        raise ValueError("Contiguity Error: Array must be C-contiguous for optimal performance")
+
 def run_trading_logic_optimized(prices_arr: np.ndarray) -> None:
     """
     Optimized trading logic with all checklist items verified
     """
-    # 1. Check contiguity
-    prices_arr = ensure_contiguous(prices_arr)
-    print(f"C_CONTIGUOUS: {prices_arr.flags['C_CONTIGUOUS']}")
-
-    # 2. Verify dtype
-    prices_arr = verify_dtype(prices_arr)
-    print(f"dtype: {prices_arr.dtype}")
-
-    # 3. Check alignment (for AVX-512)
-    alignment = prices_arr.ctypes.data % 64
-    print(f"Alignment: {alignment} bytes (should be 0 for AVX-512)")
-
-    # Call C++ engine
-    print(f"\nCalling C++ engine.calculate_signal() with {len(prices_arr)} prices...")
-    engine.calculate_signal(prices_arr)
-    print(f"After C++ processing: {prices_arr}")
-
+    check_buffer_health(prices_arr)
+    # Pass to C++: If this doesn't throw the runtime_error we added above,
+    # the bridge is perfectly synchronized.
+    try:
+        # Call C++ engine
+        print(f"\nCalling C++ engine.calculate_signal() with {len(prices_arr)} prices...")
+        engine.calculate_signal(prices_arr)
+        print("✅ C++ Side: Bridge received aligned data with zero-copy.")
+        print(f"After C++ processing: {prices_arr}")
+    except RuntimeError as e:
+        print(f"❌ Bridge Failure: {e}")
 
 async def main_async():
     """Async main with streaming support"""
@@ -159,7 +158,7 @@ async def main_async():
     print("=" * 50)
 
     # 1. Use pre-allocated buffer
-    buffer = PriceBuffer(max_size=1000)
+    buffer = PriceBuffer(max_size=100000)
 
     # Simulate getting data
     mock_prices = [150.2, 151.5, 150.8, 152.1, 153.0, 151.2, 154.5, 153.8]
@@ -181,7 +180,7 @@ async def main_async():
     print(f"Mean price: {mean_price:.4f}")
 
     # Apply mean reversion (C++)
-    engine.apply_mean_reversion(prices_arr, mean_price)
+    engine.apply_mean_reversion(prices_arr, float(mean_price))
     print(f"Prices after mean reversion (C++): {prices_arr}")
 
 

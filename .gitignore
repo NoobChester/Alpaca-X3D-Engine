@@ -2,3 +2,4 @@ build
 CMakeFiles
 .vscode
 engine.pyd
+engine.pyi
