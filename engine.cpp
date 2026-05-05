@@ -1,10 +1,11 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
-#include <vector>
-#include <numeric>
+
 #include <algorithm>
-#include <span>
 #include <memory>
+#include <numeric>
+#include <span>
+#include <vector>
 
 namespace nb = nanobind;
 
@@ -21,27 +22,27 @@ namespace nb = nanobind;
 auto calculate_signal(std::span<double> prices) -> void {
     // Access the raw pointer for the SIMD loop
     double* __restrict prices_ptr = std::assume_aligned<64>(prices.data());
-    size_t n = prices.size();
+    size_t n                      = prices.size();
 
-    #pragma clang loop vectorize(enable) vectorize_width(8)
+#pragma clang loop vectorize(enable) vectorize_width(8)
     for (size_t i = 0; i < n; ++i) {
         prices_ptr[i] = (prices_ptr[i] * 1.0001) + 0.5;
     }
 }
 
-
 /**
  * @brief Checks the health of the input buffer for signal processing
  * @details Performs manual checks on the input buffer to ensure it meets the requirements
  *          for optimal performance on AVX-512 and Zen 5 architecture. This includes dtype verification,
- *          alignment checks, and contiguity checks. This function is called before any processing to avoid costly errors down the line.
+ *          alignment checks, and contiguity checks. This function is called before any processing to avoid costly
+ * errors down the line.
  * @param prices The input buffer containing price data to be processed
  * @throws nb::type_error if any of the checks fail, providing detailed error messages for debugging
- * @note This is a critical function for ensuring that the engine operates on valid data and can achieve optimal performance
- *       without unexpected crashes or slowdowns due to invalid input.
+ * @note This is a critical function for ensuring that the engine operates on valid data and can achieve optimal
+ * performance without unexpected crashes or slowdowns due to invalid input.
  * @see calculate_signal() for the main signal processing function that relies on this buffer health check
  */
-auto check_buffer_health(nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu> prices) -> void {
+auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu>& prices) -> void {
     // 1. Manual dtype verification for extra safety
     if (prices.dtype() != nb::dtype<double>()) {
         throw nb::type_error("Dtype Mismatch: Engine requires float64 (double).");
@@ -68,28 +69,38 @@ auto check_buffer_health(nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::de
  * @note This is a placeholder for more sophisticated mean reversion calculations
  * @see calculate_signal() for related signal processing
  */
-auto apply_mean_reversion(double* __restrict data, size_t n, double mean) -> void {
-    #pragma clang loop vectorize(enable) vectorize_width(8)
+auto               apply_mean_reversion(double* __restrict data, size_t n, double mean) -> void {
+#pragma clang loop vectorize(enable) vectorize_width(8)
     for (size_t i = 0; i < n; ++i) {
         data[i] -= mean;
     }
 }
 
 // Creating the Python bridge
-NB_MODULE(engine, m) {
-    m.def("calculate_signal", [](nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu> prices) {
-        // Perform buffer health checks before processing
-        check_buffer_health(prices);
+NB_MODULE(engine, m) { // NOLINT(performance-unnecessary-value-param)
+    m.def(
+        "calculate_signal",
+        [](const nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu>& prices) {
+            // Perform buffer health checks before processing
+            check_buffer_health(prices);
 
-        // Convert the nanobind ndarray directly into a C++20 span
-        auto prices_view = std::span<double>(prices.data(), prices.shape(0));
+            // Convert the nanobind ndarray directly into a C++20 span
+            auto prices_view = std::span<double>(prices.data(), prices.shape(0));
 
-        // Offload GIL to allow multi-threaded math execution on the 9800X3D
-        nb::gil_scoped_release release;
-        calculate_signal(prices_view);
-    }, "Processes price arrays using 512-bit wide SIMD paths.");
+            // Offload GIL to allow multi-threaded math execution on the 9800X3D
+            nb::gil_scoped_release release;
+            calculate_signal(prices_view);
+        },
+        "Processes price arrays using 512-bit wide SIMD paths.");
 
-    m.def("apply_mean_reversion", [](nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu> data, double mean) {
-        apply_mean_reversion(data.data(), data.shape(0), mean);
-    }, "Applies mean reversion math on ZMM registers");
+    m.def(
+        "apply_mean_reversion",
+        [](nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu> data, double mean) {
+            // Check buffer health while GIL is held
+            check_buffer_health(data);
+
+            nb::gil_scoped_release release;
+            apply_mean_reversion(data.data(), data.shape(0), mean);
+        },
+        "Applies mean reversion math on ZMM registers");
 }

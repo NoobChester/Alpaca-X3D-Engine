@@ -3,10 +3,11 @@ Optimized trading_bot.py with proper buffering, alignment, and async support
 Addresses the implementation checklist for optimal C++ engine performance
 """
 
-import engine  # Your compiled C++ module
-import numpy as np
-from typing import List
 import asyncio
+
+import numpy as np
+
+import engine  # Your compiled C++ module
 
 
 # ============================================
@@ -14,6 +15,7 @@ import asyncio
 # ============================================
 class PriceBuffer:
     """Pre-allocated, reusable price buffer for zero-allocation trading"""
+
     def __init__(self, max_size: int = 10000, dtype: np.dtype = np.dtype(np.float64)):
         # Create 64-byte aligned buffer from the start
         self._buffer = create_aligned_array(max_size, dtype)
@@ -31,7 +33,7 @@ class PriceBuffer:
         return self._max_size
 
     @max_size.setter
-    def max_size(self, value: int):
+    def max_size(self, value: int) -> None:
         """Setter for max_size (updates internal _max_size)"""
         self._max_size = value
 
@@ -43,13 +45,13 @@ class PriceBuffer:
     @property
     def data(self) -> np.ndarray:
         """Get view of valid data (no copy) - replaces get_array()"""
-        return self._buffer[:self._size]
+        return self._buffer[: self._size]
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset without deallocating"""
         self._size = 0
 
-    def append(self, price: float):
+    def append(self, price: float) -> None:
         """Add price to buffer"""
         if self._size < self._max_size:
             self._buffer[self._size] = price
@@ -65,6 +67,7 @@ class PriceBuffer:
             return aligned
         return arr
 
+
 # ============================================
 # 2. ALIGNMENT: 64-byte aligned arrays
 # ============================================
@@ -75,21 +78,23 @@ def create_aligned_array(size: int, dtype: np.dtype | str | type = np.float64) -
 
     # Calculate aligned offset
     offset = (64 - (buf.ctypes.data % 64)) % 64
-    aligned_buf = buf[offset:offset + nbytes].view(dtype)
+    aligned_buf = buf[offset : offset + nbytes].view(dtype)
 
     return aligned_buf
+
 
 # ============================================
 # 3. ASYNC: WebSocket streaming for Alpaca
 # ============================================
 class AlpacaStreamClient:
     """Async WebSocket client for Alpaca market data"""
+
     def __init__(self, api_key: str, api_secret: str):
         self.api_key = api_key
         self.api_secret = api_secret
         self.ws_url = "wss://stream.data.alpaca.markets/v2"
 
-    async def stream_quotes(self, symbols: List[str], buffer: PriceBuffer):
+    async def stream_quotes(self, symbols: list[str], buffer: PriceBuffer) -> None:
         """Stream real-time quotes and fill buffer"""
         # Note: This is a stub - actual Alpaca auth required
         print(f"Streaming quotes for {symbols}...")
@@ -102,6 +107,7 @@ class AlpacaStreamClient:
 
         print(f"Buffered {buffer.size} prices")
 
+
 # ============================================
 # Main Trading Logic (Optimized)
 # ============================================
@@ -110,7 +116,7 @@ def check_buffer_health(prices_arr: np.ndarray) -> None:
 
     # 1. Dtype Check
     expected_dtype = np.dtype(np.float64)
-    is_correct_type = (prices_arr.dtype == expected_dtype)
+    is_correct_type = prices_arr.dtype == expected_dtype
     if is_correct_type:
         print(f"✅ Dtype Check Passed: {prices_arr.dtype}")
     else:
@@ -122,18 +128,20 @@ def check_buffer_health(prices_arr: np.ndarray) -> None:
     if alignment == 0:
         print("✅ Python Side: 64-byte Alignment Verified")
     else:
-        print(f"❌ Alignment Check Failed: Address {hex(prices_arr.ctypes.data)} is not 64-byte aligned (alignment={alignment} bytes)")
+        addr = hex(prices_arr.ctypes.data)
+        print(f"❌ Alignment Check Failed: Address {addr} is not 64-byte aligned (alignment={alignment} bytes)")
         raise MemoryError(
-            f"Performance Contract Broken: Unaligned memory at address {hex(prices_arr.ctypes.data)} (alignment={alignment} bytes, expected 0)"
+            f"Performance Contract Broken: Unaligned memory at address {addr} (alignment={alignment} bytes, expected 0)"
         )
 
     # 3. Contiguity Check
-    is_contiguous = prices_arr.flags['C_CONTIGUOUS']
+    is_contiguous = prices_arr.flags["C_CONTIGUOUS"]
     if is_contiguous:
         print("✅ Contiguity Check Passed: Array is C-contiguous")
     else:
         print("❌ Contiguity Check Failed: Array is not C-contiguous")
         raise ValueError("Contiguity Error: Array must be C-contiguous for optimal performance")
+
 
 def run_trading_logic_optimized(prices_arr: np.ndarray) -> None:
     """
@@ -151,7 +159,8 @@ def run_trading_logic_optimized(prices_arr: np.ndarray) -> None:
     except RuntimeError as e:
         print(f"❌ Bridge Failure: {e}")
 
-async def main_async():
+
+async def main_async() -> None:
     """Async main with streaming support"""
     print("=" * 50)
     print("Trading Bot - Optimized with Async Streaming")
@@ -184,7 +193,7 @@ async def main_async():
     print(f"Prices after mean reversion (C++): {prices_arr}")
 
 
-def main():
+def main() -> None:
     """Entry point - runs async main"""
     asyncio.run(main_async())
 
