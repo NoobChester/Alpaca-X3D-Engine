@@ -51,10 +51,8 @@ auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, 
     if (reinterpret_cast<uintptr_t>(prices.data()) % 64 != 0) {
         throw nb::type_error("Alignment Error: Buffer is not 64-byte aligned.");
     }
-    // 3. Contiguity Check
-    if (prices.stride(0) != 1) {
-        throw nb::type_error("Contiguity Error: Buffer must be C_CONTIGUOUS.");
-    }
+    // Note: nb::c_contig template parameter already enforces C-contiguity at binding boundary
+    // No manual stride check needed
 }
 
 /**

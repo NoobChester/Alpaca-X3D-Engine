@@ -73,9 +73,9 @@ make help              # See all available tasks
 
 **Option 2: Using pre-commit**
 ```bash
-pre_commit run --all-files  # Run the same pedantic workflow across the repository
-pre_commit run              # On staged files only
-pre_commit install          # Register the commit hook in .git/hooks
+pre-commit run --all-files  # Run the same pedantic workflow across the repository
+pre-commit run              # On staged files only
+pre-commit install          # Register the commit hook in .git/hooks
 ```
 
 **Note:** On Windows, ensure C++ tools are in PATH. See the "Setting up C++ Tools on Windows" section above for setup instructions.
@@ -92,7 +92,7 @@ The project includes VS Code settings in `.vscode/settings.json` (private to you
 - `ms-vscode.cpptools` (C++ tools)
 - `charliermarsh.ruff` (Python formatter/linter)
 
-> **Note:** The `.vscode/` folder is in `.gitignore`, so each developer can optionally configure their own VS Code settings for convenience. The shared configuration files (`.clang/.clang-format`, `.clang/.clang-tidy`, `pyproject.toml`) apply to everyone.
+> **Note:** The shared configuration files (`.clang/.clang-format`, `.clang/.clang-tidy`, `pyproject.toml`) apply to everyone.
 
 ### Fail-Fast Strategy
 
