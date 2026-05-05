@@ -21,7 +21,7 @@ Thank you for your interest in contributing to the Alpaca Engine project! This g
    # Install dependencies (including linting tools):
    pip install -r requirements.txt
    # Install pre-commit hooks:
-   pre_commit install
+   pre-commit install
    # or if you have make:
    make setup
    ```
@@ -55,7 +55,7 @@ This project uses a **Pedantic Workflow** to ensure code quality. All checks mus
 - `cppcheck` — Safety and potential bugs
 
 **Python Tools (trading_bot.py, test_error.py):**
-- `ruff format` — Code formatting (PEP 314 compliant)
+- `ruff format` — Code formatting (Black-compatible)
 - `ruff check` — Linting (fast, comprehensive)
 - `mypy` — Static type checking (strict mode)
 - `pylint` — Deep static analysis

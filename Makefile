@@ -6,10 +6,17 @@
 
 # Detect tools
 VENV_DIR := $(CURDIR)/venv
-PYTHON := $(VENV_DIR)/Scripts/python.exe
-RUFF := $(VENV_DIR)/Scripts/ruff.exe
-MYPY := $(VENV_DIR)/Scripts/mypy.exe
-PYLINT := $(VENV_DIR)/Scripts/pylint.exe
+ifeq ($(OS),Windows_NT)
+VENV_BIN_DIR := $(VENV_DIR)/Scripts
+VENV_EXE := .exe
+else
+VENV_BIN_DIR := $(VENV_DIR)/bin
+VENV_EXE :=
+endif
+PYTHON := $(VENV_BIN_DIR)/python$(VENV_EXE)
+RUFF := $(VENV_BIN_DIR)/ruff$(VENV_EXE)
+MYPY := $(VENV_BIN_DIR)/mypy$(VENV_EXE)
+PYLINT := $(VENV_BIN_DIR)/pylint$(VENV_EXE)
 PY_FILES := $(wildcard *.py)
 # Normalizes slashes and handles relative paths
 PYTHON_INC  := $(abspath $(shell "$(PYTHON)" -c "import sysconfig; print(sysconfig.get_path('include'))"))
@@ -35,7 +42,7 @@ cpp-format-check:
 ## Fix C++ formatting (clang-format)
 cpp-format-fix:
 	@echo "Fixing C++ formatting with clang-format..."
-	"$(CLANG_FORMAT)" -i --style=file engine.cpp
+	"$(CLANG_FORMAT)" -i --style=file:.clang/.clang-format engine.cpp
 	@echo "Done. engine.cpp has been reformatted."
 
 # Stop MINGW from messing with paths
