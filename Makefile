@@ -4,7 +4,7 @@
 # NOTE: C++ tools (clang-format, run-clang-tidy, cppcheck) must be in PATH.
 #       Windows: Use Git Bash with LLVM in PATH, or add LLVM to system PATH.
 
-# Detect venv Python and tools
+# Detect tools
 VENV_DIR := $(CURDIR)/venv
 PYTHON := $(VENV_DIR)/Scripts/python.exe
 RUFF := $(VENV_DIR)/Scripts/ruff.exe
@@ -100,7 +100,7 @@ py-static:
 
 # ==================== COMPOSITE TASKS ====================
 
-.PHONY: pedantic pedantic-cpp pedantic-py setup
+.PHONY: pedantic pedantic-cpp pedantic-py setup clean
 
 ## Run full pedantic workflow (C++ + Python)
 pedantic: cpp-all py-all
@@ -125,6 +125,15 @@ setup:
 	@echo "Installing pre-commit hook..."
 	"$(PYTHON)" -m pre_commit install
 	@echo "Done. You can now run 'make pedantic'"
+
+# ==================== CLEANUP ====================
+
+## Remove build artifacts and caches (cross-platform)
+clean:
+	@echo "Cleaning build artifacts and caches..."
+	cmake -E rm -rf .mypy_cache .cache .ruff_cache build
+	cmake -E rm -f engine.pyd engine.pyi
+	@echo "Done."
 
 # ==================== HELP ====================
 
@@ -153,6 +162,9 @@ help:
 	@echo "  make pedantic          - Run full workflow (C++ + Python)"
 	@echo "  make pedantic-cpp      - Run C++ workflow only"
 	@echo "  make pedantic-py       - Run Python workflow only"
+	@echo ""
+	@echo "Utility:"
+	@echo "  make clean             - Remove build artifacts and caches"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make setup             - Install dev dependencies"
