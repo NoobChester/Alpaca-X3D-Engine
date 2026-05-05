@@ -2,7 +2,8 @@ repos:
   - repo: local
     hooks:
       - id: pedantic
-        name: pedantic
+        name: pedantic (requires make)
+        description: Runs `make pedantic`; requires `make` to be installed and available on PATH.
         entry: make pedantic
         language: system
         pass_filenames: false

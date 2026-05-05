@@ -6,10 +6,17 @@
 
 # Detect tools
 VENV_DIR := $(CURDIR)/venv
-PYTHON := $(VENV_DIR)/Scripts/python.exe
-RUFF := $(VENV_DIR)/Scripts/ruff.exe
-MYPY := $(VENV_DIR)/Scripts/mypy.exe
-PYLINT := $(VENV_DIR)/Scripts/pylint.exe
+ifeq ($(OS),Windows_NT)
+VENV_BIN_DIR := $(VENV_DIR)/Scripts
+VENV_EXE := .exe
+else
+VENV_BIN_DIR := $(VENV_DIR)/bin
+VENV_EXE :=
+endif
+PYTHON := $(VENV_BIN_DIR)/python$(VENV_EXE)
+RUFF := $(VENV_BIN_DIR)/ruff$(VENV_EXE)
+MYPY := $(VENV_BIN_DIR)/mypy$(VENV_EXE)
+PYLINT := $(VENV_BIN_DIR)/pylint$(VENV_EXE)
 PY_FILES := $(wildcard *.py)
 # Normalizes slashes and handles relative paths
 PYTHON_INC  := $(abspath $(shell "$(PYTHON)" -c "import sysconfig; print(sysconfig.get_path('include'))"))
@@ -24,7 +31,8 @@ CLANG_FORMAT := clang-format
 CPPCHECK := cppcheck
 
 # Locate the run-clang-tidy script and execute it via Python so Windows cmd works.
-RUN_CLANG_TIDY := $(shell "$(PYTHON)" -c "import os, pathlib; names=('run-clang-tidy', 'run-clang-tidy.py', 'run-clang-tidy.exe'); print(next(str(pathlib.Path(directory) / name) for directory in os.environ.get('PATH', '').split(os.pathsep) if directory for name in names if (pathlib.Path(directory) / name).is_file()))")
+# Returns empty string if not found, with explicit error check in the target.
+RUN_CLANG_TIDY := $(shell "$(PYTHON)" -c "import os, pathlib; names=('run-clang-tidy', 'run-clang-tidy.py', 'run-clang-tidy.exe'); found=next((str(pathlib.Path(directory) / name) for directory in os.environ.get('PATH', '').split(os.pathsep) if directory for name in names if (pathlib.Path(directory) / name).is_file()), None); print(found if found else '')")
 
 ## Check C++ formatting (clang-format)
 cpp-format-check:
@@ -35,7 +43,7 @@ cpp-format-check:
 ## Fix C++ formatting (clang-format)
 cpp-format-fix:
 	@echo "Fixing C++ formatting with clang-format..."
-	"$(CLANG_FORMAT)" -i --style=file engine.cpp
+	"$(CLANG_FORMAT)" -i --style=file:.clang/.clang-format engine.cpp
 	@echo "Done. engine.cpp has been reformatted."
 
 # Stop MINGW from messing with paths
@@ -44,6 +52,13 @@ export MSYS_NO_PATHCONV=1
 ## Run clang-tidy (C++ logic/perf check)
 cpp-tidy: build/compile_commands.json
 	@echo "[2/6] Running clang-tidy (C++ logic/perf check)..."
+ifeq ($(RUN_CLANG_TIDY),)
+	@echo "ERROR: run-clang-tidy not found in PATH"
+	@echo "Please install it or add LLVM to your PATH:"
+	@echo "  Windows: Add C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\Llvm\x64\bin to PATH"
+	@echo "  Linux: sudo apt-get install clang-tidy"
+	@exit 1
+endif
 	"$(PYTHON)" "$(RUN_CLANG_TIDY)" \
 		-j=16 \
 		-config-file=.clang/.clang-tidy \
@@ -100,7 +115,7 @@ py-static:
 
 # ==================== COMPOSITE TASKS ====================
 
-.PHONY: pedantic pedantic-cpp pedantic-py setup clean
+.PHONY: pedantic setup clean
 
 ## Run full pedantic workflow (C++ + Python)
 pedantic: cpp-all py-all
@@ -159,7 +174,6 @@ help:
 	@echo "  make cpp-format-fix    - Fix C++ formatting (clang-format)"
 	@echo "  make cpp-tidy          - Run clang-tidy (logic/perf)"
 	@echo "  make cpp-check         - Run cppcheck (safety)"
-	@echo "  make cpp-all           - Run all C++ checks"
 	@echo ""
 	@echo "Python Tools:"
 	@echo "  make py-format-check   - Check Python formatting (ruff)"
@@ -167,12 +181,11 @@ help:
 	@echo "  make py-lint           - Run ruff check (linting)"
 	@echo "  make py-type           - Run mypy (type checking)"
 	@echo "  make py-static         - Run pylint (static analysis)"
-	@echo "  make py-all            - Run all Python checks"
 	@echo ""
 	@echo "Composite:"
 	@echo "  make pedantic          - Run full workflow (C++ + Python)"
-	@echo "  make pedantic-cpp      - Run C++ workflow only"
-	@echo "  make pedantic-py       - Run Python workflow only"
+	@echo "  make cpp-all           - Run all C++ checks"
+	@echo "  make py-all            - Run all Python checks"
 	@echo ""
 	@echo "Build:"
 	@echo "  make build             - Build the C++ Python extension"

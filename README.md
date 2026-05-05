@@ -45,7 +45,7 @@ This engine is architected to solve the "Two-Language Problem" by separating hig
    # Install dependencies (including linting tools):
    pip install -r requirements.txt
    # Install pre-commit hooks:
-   pre_commit install
+   pre-commit install
    # or if you have make:
    make setup
    ```
@@ -103,7 +103,7 @@ To ensure your 9800X3D never runs "sub-optimal" code, this project uses a **Peda
 3. **cppcheck** → Check safety and potential bugs
 
 **Python Tools:**
-1. **ruff format** → Format Python code (PEP 314 compliant)
+1. **ruff format** → Format Python code (Black-compatible style)
 2. **ruff check** → Lint Python code (fast, comprehensive)
 3. **mypy** → Static type checking (strict mode, Python 3.14)
 4. **pylint** → Deep static analysis (design, complexity)
@@ -117,7 +117,7 @@ make build
 make pedantic
 
 # Run the installed pre-commit hook checks on staged files only
-pre_commit run
+pre-commit run
 ```
 
 **Before committing:**

@@ -21,7 +21,7 @@ Thank you for your interest in contributing to the Alpaca Engine project! This g
    # Install dependencies (including linting tools):
    pip install -r requirements.txt
    # Install pre-commit hooks:
-   pre_commit install
+   pre-commit install
    # or if you have make:
    make setup
    ```
@@ -55,7 +55,7 @@ This project uses a **Pedantic Workflow** to ensure code quality. All checks mus
 - `cppcheck` — Safety and potential bugs
 
 **Python Tools (trading_bot.py, test_error.py):**
-- `ruff format` — Code formatting (PEP 314 compliant)
+- `ruff format` — Code formatting (Black-compatible)
 - `ruff check` — Linting (fast, comprehensive)
 - `mypy` — Static type checking (strict mode)
 - `pylint` — Deep static analysis
@@ -73,9 +73,9 @@ make help              # See all available tasks
 
 **Option 2: Using pre-commit**
 ```bash
-pre_commit run --all-files  # Run the same pedantic workflow across the repository
-pre_commit run              # On staged files only
-pre_commit install          # Register the commit hook in .git/hooks
+pre-commit run --all-files  # Run the same pedantic workflow across the repository
+pre-commit run              # On staged files only
+pre-commit install          # Register the commit hook in .git/hooks
 ```
 
 **Note:** On Windows, ensure C++ tools are in PATH. See the "Setting up C++ Tools on Windows" section above for setup instructions.
@@ -92,7 +92,7 @@ The project includes VS Code settings in `.vscode/settings.json` (private to you
 - `ms-vscode.cpptools` (C++ tools)
 - `charliermarsh.ruff` (Python formatter/linter)
 
-> **Note:** The `.vscode/` folder is in `.gitignore`, so each developer can optionally configure their own VS Code settings for convenience. The shared configuration files (`.clang/.clang-format`, `.clang/.clang-tidy`, `pyproject.toml`) apply to everyone.
+> **Note:** The shared configuration files (`.clang/.clang-format`, `.clang/.clang-tidy`, `pyproject.toml`) apply to everyone.
 
 ### Fail-Fast Strategy
 
