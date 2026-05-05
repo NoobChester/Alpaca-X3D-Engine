@@ -40,6 +40,9 @@ nanobind_add_module(engine engine.cpp)
 # --- 4. Target & Zen 5 Optimization ---
 target_compile_options(engine PRIVATE
     /W4 /WX
+    /clang:-Wall
+    /clang:-Wextra
+    /clang:-Werror
     /clang:-Qunused-arguments  # Silence unused flag warnings (Fixes the build crash)
 
     # --- Architecture Logic ---
@@ -66,23 +69,33 @@ target_link_libraries(engine PRIVATE Python::Module)
 
 # --- 5. Generate Python Type Stubs from C++ Source ---
 # Automatically generates engine.pyi from engine.cpp for Pylance
+set(ENGINE_PYI_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/engine.pyi")
+
 add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyi"
+    OUTPUT "${ENGINE_PYI_OUTPUT}"
     COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=$<TARGET_FILE_DIR:engine>"
-            "${Python_EXECUTABLE}" -m nanobind.stubgen -m engine -o "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyi"
+            "${Python_EXECUTABLE}" -m nanobind.stubgen -m engine -o "${ENGINE_PYI_OUTPUT}"
     DEPENDS engine
     COMMENT "Generating engine.pyi for Pylance type-checking"
 )
 
-add_custom_target(generate_stubs ALL DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyi")
+add_custom_target(generate_stubs ALL DEPENDS "${ENGINE_PYI_OUTPUT}")
 
 # --- 6. Synchronization Target ---
-# This target is always "out of date" so it always checks the dependency
-add_custom_target(copy_engine_pyd ALL
+# Copy the generated artifacts into the workspace root for editor and test convenience.
+add_custom_target(sync_engine_pyi ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${ENGINE_PYI_OUTPUT}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyi"
+    COMMENT "Copying engine.pyi into the workspace root"
+)
+
+add_custom_target(sync_engine_pyd ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:engine>
     "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyd"
-    COMMENT "Syncing engine.pyd to project root for Zen 5 execution"
+    COMMENT "Copying engine.pyd into the workspace root"
 )
 
-add_dependencies(copy_engine_pyd engine generate_stubs)
+add_dependencies(sync_engine_pyi generate_stubs)
+add_dependencies(sync_engine_pyd engine generate_stubs)

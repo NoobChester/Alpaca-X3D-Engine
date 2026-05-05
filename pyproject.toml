@@ -1,0 +1,115 @@
+# pyproject.toml for Alpaca Project
+# Python tool configurations: ruff, mypy, pylint
+
+[project]
+name = "alpaca-engine"
+version = "0.1.0"
+description = "High-performance trading engine with C++ backend (Zen 5 optimized)"
+requires-python = ">=3.14"
+dependencies = [
+    "alpaca-py>=0.43.4",
+    "nanobind>=2.12.0",
+    "numpy>=2.4.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pylint>=3.3.0",
+    "numpy[mypy]>=2.4.4",
+]
+
+# ==================== RUFF CONFIGURATION ====================
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+src = ["."]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific rules
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["engine"]
+
+# ==================== MYPY CONFIGURATION ====================
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_no_return = true
+warn_unreachable = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_any_generics = true
+disallow_any_unimported = true
+check_untyped_defs = true
+strict = true
+show_error_codes = true
+pretty = true
+
+# Paths and imports
+mypy_path = ["."]
+namespace_packages = false
+explicit_package_bases = false
+
+# Numpy and third-party stubs (numpy plugin no longer needed in NumPy 2.3+)
+follow_imports = "normal"
+ignore_missing_imports = false
+
+# Error handling
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+# ==================== PYLINT CONFIGURATION ====================
+[tool.pylint]
+py-version = "3.14"
+fail-under = 10.0
+
+[tool.pylint.messages_control]
+disable = [
+    "C0114",  # missing-module-docstring
+    "C0116",  # missing-function-docstring
+    "R0903",  # too-few-public-methods
+    "W0611",  # unused-import (handled by ruff)
+    "I1101",  # c-extension-no-member (expected for nanobind modules)
+    "R0801",  # duplicate-code (shared utility functions are OK)
+]
+extension-pkg-whitelist = ["numpy", "engine"]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-args = 10
+max-locals = 25
+max-returns = 10
+max-branches = 20
+
+[tool.pylint.variables]
+dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?)$"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

@@ -1,3 +1,9 @@
 alpaca-py==0.43.4
 nanobind==2.12.0
 numpy==2.4.4
+
+# Linting and formatting tools (Pedantic Workflow)
+ruff>=0.8.0
+mypy>=1.13.0
+pylint>=3.3.0
+numpy[mypy]>=2.4.4
