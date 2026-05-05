@@ -20,14 +20,14 @@ This engine is architected to solve the "Two-Language Problem" by separating hig
 ## 🚀 Performance Profile
 
 * **ISA:** Optimized for `znver5` using AVX-512 foundation (`zmm` registers).
-* **Math:** Compiled with `/clang:-fassociative-math` to enable auto-vectorization of signal hot-paths.
+* **Math:** Compiled with `-march=znver5` and `/clang:-fassociative-math` to enable auto-vectorization of signal hot-paths.
 * **Latency:** Minimal function prologue overhead via `/clang:-fno-stack-protector`.
 * **Bindings:** Zero-copy memory mapping between C++ and NumPy using `nanobind`.
 
 ## 🛠 Prerequisites
 
-* **CPU:** AMD Ryzen 7 9800X3D.
-* **Compiler:** LLVM/Clang (`clang-cl`).
+* **CPU:** AMD Ryzen 7 9800X3D (with AVX-512 support).
+* **Compiler:** LLVM/Clang 19+ (`clang-cl`).
 * **Build System:** CMake + Ninja.
 * **Environment:** Python 3.14+.
 
@@ -35,8 +35,8 @@ This engine is architected to solve the "Two-Language Problem" by separating hig
 
 1. **Clone & Environment:**
    ```powershell
-   git clone [git link]
-   cd [git repo name]
+   git clone https://github.com/NoobChester/Alpaca-X3D-Engine.git
+   cd Alpaca-X3D-Engine
    python -m venv venv
    [activate venv]
    python -m pip install -r requirements.txt
@@ -44,7 +44,7 @@ This engine is architected to solve the "Two-Language Problem" by separating hig
 
 2. **Configure (Ninja):**
    ```powershell
-   cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+   cmake --preset 9800X3D-Clang-Ninja
    ```
 
 3. **Compile:**
@@ -86,9 +86,14 @@ import numpy as np
 
 # Engine utilizes 512-bit vector paths (8x doubles per clock)
 prices = np.random.rand(1024).astype(np.float64)
-signals = engine.calculate_signal(prices)
+signals = engine.calculate_signal(prices)  # Modifies array in-place
 
-print(f"Vectorized Signal: {signals[0]}")
+print(f"Modified price: {prices[0]}")
+
+# Apply mean reversion
+data = np.random.rand(512).astype(np.float64)
+engine.apply_mean_reversion(data, np.mean(data))
+print(f"Mean-reverted: {data[0]}")
 ```
 
 ## ⚖️ License
