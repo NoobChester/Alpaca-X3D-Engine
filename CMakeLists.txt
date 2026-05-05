@@ -40,7 +40,6 @@ nanobind_add_module(engine engine.cpp)
 # --- 4. Target & Zen 5 Optimization ---
 target_compile_options(engine PRIVATE
     /W4 /WX
-    /EHsc                      # Enable C++ Exceptions (Required for Nanobind)
     /clang:-Qunused-arguments  # Silence unused flag warnings (Fixes the build crash)
 
     # --- Architecture Logic ---
