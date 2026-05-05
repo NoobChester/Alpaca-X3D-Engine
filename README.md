@@ -1,4 +1,4 @@
-# Alpaca-X3D-Engine
+# Alpaca-X3D-Engine (IN DEVELOPMENT)
 
 A high-performance quantitative trading engine built with **C++26**, **Python 3.14**, and **nanobind**. Specifically engineered for **AMD Zen 5 (Ryzen 7 9800X3D)**, leveraging 512-bit wide SIMD (AVX-512) for ultra-low latency execution.
 
