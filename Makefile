@@ -121,7 +121,9 @@ py-all: py-format-check py-lint py-type py-static
 ## Install development dependencies
 setup:
 	@echo "Installing development dependencies..."
-	pip install -r requirements.txt
+	"$(PYTHON)" -m pip install -r requirements.txt
+	@echo "Installing pre-commit hook..."
+	"$(PYTHON)" -m pre_commit install
 	@echo "Done. You can now run 'make pedantic'"
 
 # ==================== HELP ====================

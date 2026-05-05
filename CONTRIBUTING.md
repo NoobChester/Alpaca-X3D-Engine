@@ -20,9 +20,12 @@ Thank you for your interest in contributing to the Alpaca Engine project! This g
 
    # Install dependencies (including linting tools):
    pip install -r requirements.txt
+   # Install pre-commit hooks:
+   pre_commit install
    # or if you have make:
    make setup
    ```
+   `make setup` installs the venv dependencies and registers the `pre-commit` hook that runs `make pedantic` before commits.
 
 3. **Build the C++ engine:**
    ```bash
@@ -55,12 +58,19 @@ This project uses a **Pedantic Workflow** to ensure code quality. All checks mus
 
 ### How to Run Checks
 
-**Option 1: Using Make (Recommended if tools are in PATH)**
+**Option 1: Using Make directly**
 ```bash
 make pedantic          # Run full workflow (C++ + Python)
 make pedantic-cpp      # C++ checks only
 make pedantic-py       # Python checks only
 make help              # See all available tasks
+```
+
+**Option 2: Using pre-commit**
+```bash
+pre_commit run --all-files  # Run the same pedantic workflow across the repository
+pre_commit run              # On staged files only
+pre_commit install          # Register the commit hook in .git/hooks
 ```
 
 **Note:** On Windows, ensure C++ tools are in PATH. See the "Setting up C++ Tools on Windows" section above for setup instructions.

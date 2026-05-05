@@ -44,9 +44,12 @@ This engine is architected to solve the "Two-Language Problem" by separating hig
    source venv/bin/activate
    # Install dependencies (including linting tools):
    pip install -r requirements.txt
+   # Install pre-commit hooks:
+   pre_commit install
    # or if you have make:
    make setup
    ```
+   `make setup` installs the venv dependencies and registers the `pre-commit` hook that runs `make pedantic` before each commit.
 
 2. **Configure (Ninja):**
    ```powershell
@@ -103,8 +106,11 @@ To ensure your 9800X3D never runs "sub-optimal" code, this project uses a **Peda
 
 **Run checks manually:**
 ```powershell
-# Run full workflow
+# Run full workflow across the repository
 make pedantic
+
+# Run the installed pre-commit hook checks on staged files only
+pre_commit run
 ```
 
 **Before committing:**
