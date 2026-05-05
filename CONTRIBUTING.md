@@ -29,6 +29,10 @@ Thank you for your interest in contributing to the Alpaca Engine project! This g
 
 3. **Build the C++ engine:**
    ```bash
+   # Option 1: Using make (recommended)
+   make build
+
+   # Option 2: Using cmake directly
    cmake --preset 9800X3D-Clang-Ninja
    cmake --build build --config Release
    ```
@@ -60,6 +64,7 @@ This project uses a **Pedantic Workflow** to ensure code quality. All checks mus
 
 **Option 1: Using Make directly**
 ```bash
+make build             # Build the C++ extension
 make pedantic          # Run full workflow (C++ + Python)
 make pedantic-cpp      # C++ checks only
 make pedantic-py       # Python checks only

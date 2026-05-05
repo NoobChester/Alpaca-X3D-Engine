@@ -56,8 +56,12 @@ This engine is architected to solve the "Two-Language Problem" by separating hig
    cmake --preset 9800X3D-Clang-Ninja
    ```
 
-3. **Compile:**
+3. **Build:**
    ```powershell
+   # Option 1: Using make (recommended)
+   make build
+
+   # Option 2: Using cmake directly
    cmake --build build --config Release
    ```
    *The build copies `engine.pyd` and `engine.pyi` into the project root for convenience.*
@@ -106,6 +110,9 @@ To ensure your 9800X3D never runs "sub-optimal" code, this project uses a **Peda
 
 **Run checks manually:**
 ```powershell
+# Build the C++ extension
+make build
+
 # Run full workflow across the repository
 make pedantic
 
@@ -169,6 +176,7 @@ Please read our [Contributing Guide](CONTRIBUTING.md) before submitting PRs. All
 
 Quick start for contributors:
 ```bash
+make build             # Build the C++ extension
 make pedantic         # Run all checks
 ```
 

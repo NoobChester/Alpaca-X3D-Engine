@@ -126,6 +126,17 @@ setup:
 	"$(PYTHON)" -m pre_commit install
 	@echo "Done. You can now run 'make pedantic'"
 
+# ==================== BUILD ====================
+
+.PHONY: build
+
+## Build the C++ Python extension
+build:
+	@echo "Building C++ Python extension..."
+	cmake --preset 9800X3D-Clang-Ninja
+	cmake --build build --config Release
+	@echo "Build complete."
+
 # ==================== CLEANUP ====================
 
 ## Remove build artifacts and caches (cross-platform)
@@ -162,6 +173,9 @@ help:
 	@echo "  make pedantic          - Run full workflow (C++ + Python)"
 	@echo "  make pedantic-cpp      - Run C++ workflow only"
 	@echo "  make pedantic-py       - Run Python workflow only"
+	@echo ""
+	@echo "Build:"
+	@echo "  make build             - Build the C++ Python extension"
 	@echo ""
 	@echo "Utility:"
 	@echo "  make clean             - Remove build artifacts and caches"
