@@ -12,11 +12,13 @@ namespace nb = nanobind;
 /**
  * @brief Applies a simple transformation to price data for signal generation
  * @details Multiplies each price by 1.0001 and adds 0.5. This is a placeholder
- *          function that will be replaced with actual trading signal calculations.
- *          Optimized for AVX-512 and Zen 5 architecture with vectorization.
+ *          function that will be replaced with actual trading signal
+ * calculations. Optimized for AVX-512 and Zen 5 architecture with
+ * vectorization.
  * @param prices Pointer to array of prices (modified in-place)
  * @param n Number of elements in the prices array
- * @note Uses __restrict to indicate no pointer aliasing, enabling better optimization
+ * @note Uses __restrict to indicate no pointer aliasing, enabling better
+ * optimization
  * @warning Input array must be at least n elements long and properly aligned
  */
 auto calculate_signal(std::span<double> prices) -> void {
@@ -32,15 +34,19 @@ auto calculate_signal(std::span<double> prices) -> void {
 
 /**
  * @brief Checks the health of the input buffer for signal processing
- * @details Performs manual checks on the input buffer to ensure it meets the requirements
- *          for optimal performance on AVX-512 and Zen 5 architecture. This includes dtype verification,
- *          alignment checks, and contiguity checks. This function is called before any processing to avoid costly
- * errors down the line.
+ * @details Performs manual checks on the input buffer to ensure it meets the
+ * requirements for optimal performance on AVX-512 and Zen 5 architecture. This
+ * includes dtype verification, alignment checks, and contiguity checks. This
+ * function is called before any processing to avoid costly errors down the
+ * line.
  * @param prices The input buffer containing price data to be processed
- * @throws nb::type_error if any of the checks fail, providing detailed error messages for debugging
- * @note This is a critical function for ensuring that the engine operates on valid data and can achieve optimal
- * performance without unexpected crashes or slowdowns due to invalid input.
- * @see calculate_signal() for the main signal processing function that relies on this buffer health check
+ * @throws nb::type_error if any of the checks fail, providing detailed error
+ * messages for debugging
+ * @note This is a critical function for ensuring that the engine operates on
+ * valid data and can achieve optimal performance without unexpected crashes or
+ * slowdowns due to invalid input.
+ * @see calculate_signal() for the main signal processing function that relies
+ * on this buffer health check
  */
 auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu>& prices) -> void {
     // 1. Manual dtype verification for extra safety
@@ -51,8 +57,8 @@ auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, 
     if (reinterpret_cast<uintptr_t>(prices.data()) % 64 != 0) {
         throw nb::type_error("Alignment Error: Buffer is not 64-byte aligned.");
     }
-    // Note: nb::c_contig template parameter already enforces C-contiguity at binding boundary
-    // No manual stride check needed
+    // Note: nb::c_contig template parameter already enforces C-contiguity at
+    // binding boundary No manual stride check needed
 }
 
 /**
@@ -64,7 +70,8 @@ auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, 
  * @param data Pointer to array of data points (modified in-place)
  * @param n Number of elements in the data array
  * @param mean The mean value to subtract from each data point
- * @note This is a placeholder for more sophisticated mean reversion calculations
+ * @note This is a placeholder for more sophisticated mean reversion
+ * calculations
  * @see calculate_signal() for related signal processing
  */
 auto               apply_mean_reversion(double* __restrict data, size_t n, double mean) -> void {
@@ -89,7 +96,8 @@ NB_MODULE(engine, m) { // NOLINT(performance-unnecessary-value-param)
             nb::gil_scoped_release release;
             calculate_signal(prices_view);
         },
-        "Processes price arrays using 512-bit wide SIMD paths.");
+        "Processes price arrays using 512-bit wide SIMD paths."
+    );
 
     m.def(
         "apply_mean_reversion",
@@ -100,5 +108,6 @@ NB_MODULE(engine, m) { // NOLINT(performance-unnecessary-value-param)
             nb::gil_scoped_release release;
             apply_mean_reversion(data.data(), data.shape(0), mean);
         },
-        "Applies mean reversion math on ZMM registers");
+        "Applies mean reversion math on ZMM registers"
+    );
 }

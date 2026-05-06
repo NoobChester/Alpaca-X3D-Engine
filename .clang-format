@@ -20,9 +20,19 @@ IndentGotoLabels: false  # goto discouraged in modern C++
 IndentPPDirectives: AfterHash
 
 # Alignment
-AlignAfterOpenBracket: AlwaysBreak
-AlignConsecutiveAssignments: AcrossEmptyLines
-AlignConsecutiveDeclarations: AcrossEmptyLines
+AlignAfterOpenBracket: BlockIndent
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true
 AlignTrailingComments: true
 
 # Return Type and Bracing (Strict for mission-critical code)

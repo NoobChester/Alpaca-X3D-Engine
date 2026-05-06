@@ -78,8 +78,4 @@ CheckOptions:
   # Modernize: Ensure we use the most efficient type traits for C++26
   - key:             modernize-type-traits.IgnoreMacros
     value:           true
-  # Readability: Ensure 'snake_case' is strictly enforced for your signal logic
-  - key:             readability-identifier-naming.FunctionCase
-    value:           lower_case
 ...
-

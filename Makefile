@@ -2,25 +2,19 @@
 # Public tasks that anyone can run (not just VS Code users)
 #
 # NOTE: C++ tools (clang-format, run-clang-tidy, cppcheck) must be in PATH.
-#       Windows: Use Git Bash with LLVM in PATH, or add LLVM to system PATH.
+#       Python tools (ruff, mypy, pylint) must also be in PATH.
+#       Activate your venv before running, or install tools system-wide.
 
-# Detect tools
-VENV_DIR := $(CURDIR)/venv
-ifeq ($(OS),Windows_NT)
-VENV_BIN_DIR := $(VENV_DIR)/Scripts
-VENV_EXE := .exe
-else
-VENV_BIN_DIR := $(VENV_DIR)/bin
-VENV_EXE :=
-endif
-PYTHON := $(VENV_BIN_DIR)/python$(VENV_EXE)
-RUFF := $(VENV_BIN_DIR)/ruff$(VENV_EXE)
-MYPY := $(VENV_BIN_DIR)/mypy$(VENV_EXE)
-PYLINT := $(VENV_BIN_DIR)/pylint$(VENV_EXE)
-PY_FILES := $(wildcard *.py)
-# Normalizes slashes and handles relative paths
-PYTHON_INC  := $(abspath $(shell "$(PYTHON)" -c "import sysconfig; print(sysconfig.get_path('include'))"))
-NANOBIND_INC := $(abspath $(shell "$(PYTHON)" -c "import nanobind; print(nanobind.include_dir())"))
+# Detect python: use activated venv if $$VIRTUAL_ENV is set,
+# otherwise fall back to venv/ directory or system python.
+PYTHON := $(if $(VIRTUAL_ENV),$(if $(wildcard $(VIRTUAL_ENV)/Scripts/python.exe),$(VIRTUAL_ENV)/Scripts/python.exe,$(VIRTUAL_ENV)/bin/python),$(if $(wildcard venv/Scripts/python.exe),venv/Scripts/python.exe,$(if $(wildcard venv/bin/python3),venv/bin/python3,$(if $(wildcard venv/bin/python),venv/bin/python,python))))
+
+PY_FILES := $(shell python -c "import pathlib; files = [str(p).replace(chr(92), '/') for p in sorted(pathlib.Path('.').glob('**/*.py')) if 'venv' not in p.parts]; print(' '.join(files))")
+CPP_FILES := $(shell python -c "import pathlib; excludes = {'venv', 'build', '.cache'}; files = [str(p).replace(chr(92), '/') for p in sorted(pathlib.Path('.').glob('**/*.cpp')) if not any(excl in p.parts for excl in excludes)]; print(' '.join(files))")
+
+# Helpers to avoid repeating long commands
+RUN_TIMED := $(PYTHON) .clang/run_timed.py
+MAKEQUIET := $(MAKE) --no-print-directory
 
 # ==================== C++ TOOLS ====================
 
@@ -30,54 +24,33 @@ NANOBIND_INC := $(abspath $(shell "$(PYTHON)" -c "import nanobind; print(nanobin
 CLANG_FORMAT := clang-format
 CPPCHECK := cppcheck
 
-# Locate the run-clang-tidy script and execute it via Python so Windows cmd works.
-# Returns empty string if not found, with explicit error check in the target.
-RUN_CLANG_TIDY := $(shell "$(PYTHON)" -c "import os, pathlib; names=('run-clang-tidy', 'run-clang-tidy.py', 'run-clang-tidy.exe'); found=next((str(pathlib.Path(directory) / name) for directory in os.environ.get('PATH', '').split(os.pathsep) if directory for name in names if (pathlib.Path(directory) / name).is_file()), None); print(found if found else '')")
-
 ## Check C++ formatting (clang-format)
 cpp-format-check:
-	@echo "[1/6] Running clang-format (C++ style check)..."
-	"$(CLANG_FORMAT)" --dry-run --Werror --style=file:.clang/.clang-format engine.cpp
-	@echo "PASS: clang-format"
+	@echo "[1/7] Running clang-format (C++ style check)..."
+	@$(RUN_TIMED) "$(CLANG_FORMAT) --dry-run --Werror --style=file:.clang-format $(CPP_FILES)" 'clang-format'
+	@echo ""
 
 ## Fix C++ formatting (clang-format)
 cpp-format-fix:
 	@echo "Fixing C++ formatting with clang-format..."
-	"$(CLANG_FORMAT)" -i --style=file:.clang/.clang-format engine.cpp
-	@echo "Done. engine.cpp has been reformatted."
+	"$(CLANG_FORMAT)" -i --style=file:.clang-format $(CPP_FILES)
+	@echo "Done. C++ files have been reformatted."
+	@echo ""
 
 # Stop MINGW from messing with paths
 export MSYS_NO_PATHCONV=1
 
 ## Run clang-tidy (C++ logic/perf check)
 cpp-tidy: build/compile_commands.json
-	@echo "[2/6] Running clang-tidy (C++ logic/perf check)..."
-ifeq ($(RUN_CLANG_TIDY),)
-	@echo "ERROR: run-clang-tidy not found in PATH"
-	@echo "Please install it or add LLVM to your PATH:"
-	@echo "  Windows: Add C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\Llvm\x64\bin to PATH"
-	@echo "  Linux: sudo apt-get install clang-tidy"
-	@exit 1
-endif
-	"$(PYTHON)" "$(RUN_CLANG_TIDY)" \
-		-j=16 \
-		-config-file=.clang/.clang-tidy \
-		-warnings-as-errors="*" \
-		-p=build \
-		-- \
-		-std=c++2c \
-		-march=znver5 \
-		-Iinclude \
-		-isystem$(PYTHON_INC) \
-		-isystem$(NANOBIND_INC) \
-		engine.cpp
-	@echo "PASS: clang-tidy"
+	@echo "[2/7] Running clang-tidy (C++ logic/perf check)..."
+	@$(RUN_TIMED) "$(PYTHON) .clang/run_clang_tidy_parallel.py $(CPP_FILES)" 'clang-tidy'
+	@echo ""
 
 ## Run cppcheck (C++ safety check)
 cpp-check:
-	@echo "[3/6] Running cppcheck (C++ safety check)..."
-	$(CPPCHECK) --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem engine.cpp
-	@echo "PASS: cppcheck"
+	@echo "[3/7] Running cppcheck (C++ safety check)..."
+	@$(RUN_TIMED) '$(CPPCHECK) --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem $(CPP_FILES)' 'cppcheck'
+	@echo ""
 
 # ==================== PYTHON TOOLS ====================
 
@@ -85,60 +58,71 @@ cpp-check:
 
 ## Check Python formatting (ruff format)
 py-format-check:
-	@echo "[4/6] Running ruff format (Python style check)..."
-	$(RUFF) format --check --diff $(PY_FILES)
-	@echo "PASS: ruff format"
+	@echo "[4/7] Running ruff format (Python style check)..."
+	@$(RUN_TIMED) '$(PYTHON) -m ruff format --check --diff $(PY_FILES)' 'ruff format'
+	@echo ""
 
 ## Fix Python formatting (ruff format)
 py-format-fix:
 	@echo "Fixing Python formatting with ruff..."
-	$(RUFF) format $(PY_FILES)
+	$(PYTHON) -m ruff format $(PY_FILES)
 	@echo "Done. Python files have been reformatted."
+	@echo ""
 
 ## Run ruff check (Python linting)
 py-lint:
-	@echo "[5/6] Running ruff check (Python linting)..."
-	$(RUFF) check $(PY_FILES)
-	@echo "PASS: ruff check"
+	@echo "[5/7] Running ruff check (Python linting)..."
+	@$(RUN_TIMED) '$(PYTHON) -m ruff check $(PY_FILES)' 'ruff check'
+	@echo ""
 
 ## Run mypy (Python type check)
 py-type:
-	@echo "[6/6] Running mypy (Python type check)..."
-	$(MYPY) $(PY_FILES)
-	@echo "PASS: mypy"
+	@echo "[6/7] Running mypy (Python type check)..."
+	@$(RUN_TIMED) '$(PYTHON) -m mypy $(PY_FILES)' 'mypy'
+	@echo ""
 
 ## Run pylint (Python static analysis)
 py-static:
-	@echo "Running pylint (Python static analysis)..."
-	$(PYLINT) $(PY_FILES)
-	@echo "PASS: pylint"
+	@echo "[7/7] Running pylint (Python static analysis)..."
+	@$(RUN_TIMED) '$(PYTHON) -m pylint $(PY_FILES)' 'pylint'
+	@echo ""
 
 # ==================== COMPOSITE TASKS ====================
 
 .PHONY: pedantic setup clean
 
 ## Run full pedantic workflow (C++ + Python)
-pedantic: cpp-all py-all
+
+pedantic:
+	@$(MAKEQUIET) cpp-all && $(MAKEQUIET) py-all
 	@echo "============================================"
-	@echo "   ALL PEDANTIC CHECKS PASSED"
+	@echo "        ALL PEDANTIC CHECKS PASSED          "
 	@echo "============================================"
 
 ## Run all C++ checks
-cpp-all: cpp-format-check cpp-tidy cpp-check
+
+cpp-all:
+	@$(RUN_TIMED) '$(MAKEQUIET) cpp-format-check && $(MAKEQUIET) cpp-tidy && $(MAKEQUIET) cpp-check' 'cpp-all'
 	@echo "All C++ checks passed!"
+	@$(PYTHON) -c "import sys; print('Files checked:'); [print('  ' + path) for path in sys.argv[1:]]" $(CPP_FILES)
+	@echo ""
 
 ## Run all Python checks
-py-all: py-format-check py-lint py-type py-static
+
+py-all:
+	@$(RUN_TIMED) '$(MAKEQUIET) py-format-check && $(MAKEQUIET) py-lint && $(MAKEQUIET) py-type && $(MAKEQUIET) py-static' 'py-all'
 	@echo "All Python checks passed!"
+	@$(PYTHON) -c "import sys; print('Files checked:'); [print('  ' + path) for path in sys.argv[1:]]" $(PY_FILES)
+	@echo ""
 
 # ==================== SETUP ====================
 
 ## Install development dependencies
 setup:
 	@echo "Installing development dependencies..."
-	"$(PYTHON)" -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -r requirements.txt
 	@echo "Installing pre-commit hook..."
-	"$(PYTHON)" -m pre_commit install
+	$(PYTHON) -m pre_commit install
 	@echo "Done. You can now run 'make pedantic'"
 
 # ==================== BUILD ====================

@@ -49,12 +49,12 @@ This project uses a **Pedantic Workflow** to ensure code quality. All checks mus
 
 ### What Gets Checked
 
-**C++ Tools (engine.cpp):**
+**C++ Tools (project C++ files):**
 - `clang-format` — Code style (Microsoft-based, C++26)
 - `clang-tidy` — Logic, performance, modern C++ usage
 - `cppcheck` — Safety and potential bugs
 
-**Python Tools (trading_bot.py, test_error.py):**
+**Python Tools (project Python files):**
 - `ruff format` — Code formatting (Black-compatible)
 - `ruff check` — Linting (fast, comprehensive)
 - `mypy` — Static type checking (strict mode)
@@ -66,33 +66,19 @@ This project uses a **Pedantic Workflow** to ensure code quality. All checks mus
 ```bash
 make build             # Build the C++ extension
 make pedantic          # Run full workflow (C++ + Python)
-make pedantic-cpp      # C++ checks only
-make pedantic-py       # Python checks only
+make cpp-all           # C++ checks only
+make py-all            # Python checks only
 make help              # See all available tasks
 ```
 
 **Option 2: Using pre-commit**
 ```bash
 pre-commit run --all-files  # Run the same pedantic workflow across the repository
-pre-commit run              # On staged files only
+pre-commit                  # On staged files only
 pre-commit install          # Register the commit hook in .git/hooks
 ```
 
 **Note:** On Windows, ensure C++ tools are in PATH. See the "Setting up C++ Tools on Windows" section above for setup instructions.
-
-### VS Code Integration
-
-The project includes VS Code settings in `.vscode/settings.json` (private to your local setup) that:
-- Enable format-on-save for C++ and Python
-- Configure clang-format path for C++
-- Set up ruff as the default Python formatter
-- Enable linting with mypy, pylint, and ruff
-
-**Recommended extensions for VS Code users:**
-- `ms-vscode.cpptools` (C++ tools)
-- `charliermarsh.ruff` (Python formatter/linter)
-
-> **Note:** The shared configuration files (`.clang/.clang-format`, `.clang/.clang-tidy`, `pyproject.toml`) apply to everyone.
 
 ### Fail-Fast Strategy
 
@@ -101,7 +87,7 @@ The workflow stops on the first error. If `ruff format` fails, it won't run `myp
 Example error output:
 ```
 FAIL: ruff format found style issues
-Run: ruff format trading_bot.py test_error.py
+Run: ruff format <project Python files>
 ```
 
 ## 📝 Making Changes

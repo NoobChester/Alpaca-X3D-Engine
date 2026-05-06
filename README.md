@@ -147,7 +147,7 @@ Example error output:
 PASS: clang-format
 PASS: clang-tidy
 FAIL: cppcheck
-Run: cppcheck engine.cpp
+Run: cppcheck <project C++ files>
 ```
 
 For detailed setup instructions, editor integration, and troubleshooting, see our [Contributing Guide](CONTRIBUTING.md).
