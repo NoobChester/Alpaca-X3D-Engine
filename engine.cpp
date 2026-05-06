@@ -9,6 +9,9 @@
 
 namespace nb = nanobind;
 
+// Convenience aliases for the ndarray types used throughout the engine
+using PriceArray = const nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu>&;
+
 /**
  * @brief Applies a simple transformation to price data for signal generation
  * @details Multiplies each price by 1.0001 and adds 0.5. This is a placeholder
@@ -24,7 +27,7 @@ namespace nb = nanobind;
 auto calculate_signal(std::span<double> prices) -> void {
     // Access the raw pointer for the SIMD loop
     double* __restrict prices_ptr = std::assume_aligned<64>(prices.data());
-    size_t n                      = prices.size();
+    size_t n = prices.size();
 
 #pragma clang loop vectorize(enable) vectorize_width(8)
     for (size_t i = 0; i < n; ++i) {
@@ -48,7 +51,7 @@ auto calculate_signal(std::span<double> prices) -> void {
  * @see calculate_signal() for the main signal processing function that relies
  * on this buffer health check
  */
-auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu>& prices) -> void {
+auto check_buffer_health(PriceArray prices) -> void {
     // 1. Manual dtype verification for extra safety
     if (prices.dtype() != nb::dtype<double>()) {
         throw nb::type_error("Dtype Mismatch: Engine requires float64 (double).");
@@ -85,7 +88,7 @@ auto apply_mean_reversion(double* __restrict data, size_t n, double mean) -> voi
 NB_MODULE(engine, m) { // NOLINT(performance-unnecessary-value-param)
     m.def(
         "calculate_signal",
-        [](const nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu>& prices) {
+        [](PriceArray prices) {
             // Perform buffer health checks before processing
             check_buffer_health(prices);
 
@@ -101,7 +104,7 @@ NB_MODULE(engine, m) { // NOLINT(performance-unnecessary-value-param)
 
     m.def(
         "apply_mean_reversion",
-        [](nb::ndarray<double, nb::shape<-1>, nb::c_contig, nb::device::cpu> data, double mean) {
+        [](PriceArray data, double mean) {
             // Check buffer health while GIL is held
             check_buffer_health(data);
 
