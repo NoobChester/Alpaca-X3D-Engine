@@ -7,13 +7,13 @@
 
 # Detect python: use activated venv if $$VIRTUAL_ENV is set,
 # otherwise fall back to venv/ directory or system python.
-PYTHON := $(if $(VIRTUAL_ENV),$(if $(wildcard $(VIRTUAL_ENV)/Scripts/python.exe),$(VIRTUAL_ENV)/Scripts/python.exe,$(VIRTUAL_ENV)/bin/python),$(if $(wildcard venv/Scripts/python.exe),venv/Scripts/python.exe,$(if $(wildcard venv/bin/python3),venv/bin/python3,$(if $(wildcard venv/bin/python),venv/bin/python,python))))
+PYTHON := $(shell python .tools/find_python.py)
 
-PY_FILES := $(shell python -c "import pathlib; files = [str(p).replace(chr(92), '/') for p in sorted(pathlib.Path('.').glob('**/*.py')) if 'venv' not in p.parts]; print(' '.join(files))")
-CPP_FILES := $(shell python -c "import pathlib; excludes = {'venv', 'build', '.cache'}; files = [str(p).replace(chr(92), '/') for p in sorted(pathlib.Path('.').glob('**/*.cpp')) if not any(excl in p.parts for excl in excludes)]; print(' '.join(files))")
+PY_FILES := $(shell $(PYTHON) .tools/discover_py_files.py)
+CPP_FILES := $(shell $(PYTHON) .tools/discover_cpp_files.py)
 
 # Helpers to avoid repeating long commands
-RUN_TIMED := $(PYTHON) .clang/run_timed.py
+RUN_TIMED := $(PYTHON) .tools/run_timed.py
 MAKEQUIET := $(MAKE) --no-print-directory
 
 # ==================== C++ TOOLS ====================
@@ -43,7 +43,7 @@ export MSYS_NO_PATHCONV=1
 ## Run clang-tidy (C++ logic/perf check)
 cpp-tidy: build/compile_commands.json
 	@echo "[2/7] Running clang-tidy (C++ logic/perf check)..."
-	@$(RUN_TIMED) "$(PYTHON) .clang/run_clang_tidy_parallel.py $(CPP_FILES)" 'clang-tidy'
+	@$(RUN_TIMED) "$(PYTHON) .tools/run_clang_tidy_parallel.py $(CPP_FILES)" 'clang-tidy'
 	@echo ""
 
 ## Run cppcheck (C++ safety check)
