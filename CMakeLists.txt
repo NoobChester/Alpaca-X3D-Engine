@@ -19,9 +19,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MSVC_PARALLEL_COMPILE OFF)
 
 # --- 2. Python & Virtual Environment ---
-set(Python_EXECUTABLE "${CMAKE_SOURCE_DIR}/venv/Scripts/python.exe")
-set(Python_FIND_STRATEGY LOCATION)
-set(Python_FIND_VIRTUALENV ONLY)
+# Use activated venv if $VIRTUAL_ENV is set, otherwise let CMake find system python.
+if(DEFINED ENV{VIRTUAL_ENV})
+    if(EXISTS "$ENV{VIRTUAL_ENV}/Scripts/python.exe")
+        set(Python_EXECUTABLE "$ENV{VIRTUAL_ENV}/Scripts/python.exe")
+    else()
+        set(Python_EXECUTABLE "$ENV{VIRTUAL_ENV}/bin/python3")
+    endif()
+    set(Python_FIND_STRATEGY LOCATION)
+    set(Python_FIND_VIRTUALENV ONLY)
+else()
+    set(Python_FIND_VIRTUALENV FIRST)
+endif()
 
 find_package(Python 3.14 REQUIRED COMPONENTS Interpreter Development.Module)
 message(STATUS "LOCKED TO PYTHON: ${Python_EXECUTABLE}")
