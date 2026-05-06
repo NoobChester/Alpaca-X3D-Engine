@@ -117,8 +117,8 @@ All tool configurations are in **public files** (not in `.vscode/`):
 
 | Tool | Config File | Description |
 |------|-------------|-------------|
-| clang-format | `.clang/.clang-format` | C++ style rules |
-| clang-tidy | `.clang/.clang-tidy` | C++ static analysis rules |
+| clang-format | `.clang-format` | C++ style rules |
+| clang-tidy | `.clang-tidy` | C++ static analysis rules |
 | ruff, mypy, pylint | `pyproject.toml` | Python tool configs |
 
 To modify rules, edit these files directly. They apply to everyone who clones the repo.

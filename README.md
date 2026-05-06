@@ -132,8 +132,8 @@ git commit --no-verify
 
 | Tool | Config File | Description |
 |------|-------------|-------------|
-| clang-format | `.clang/.clang-format` | C++ style (Microsoft-based, 4-space indent) |
-| clang-tidy | `.clang/.clang-tidy` | C++ static analysis (performance, safety, modern C++) |
+| clang-format | `.clang-format` | C++ style (Microsoft-based, 4-space indent) |
+| clang-tidy | `.clang-tidy` | C++ static analysis (performance, safety, modern C++) |
 | ruff/mypy/pylint | `pyproject.toml` | Python tools configuration (all in one file) |
 
 ### Fail-Fast Approach

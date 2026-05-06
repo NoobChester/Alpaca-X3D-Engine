@@ -74,7 +74,7 @@ auto check_buffer_health(const nb::ndarray<double, nb::shape<-1>, nb::c_contig, 
  * calculations
  * @see calculate_signal() for related signal processing
  */
-auto               apply_mean_reversion(double* __restrict data, size_t n, double mean) -> void {
+auto apply_mean_reversion(double* __restrict data, size_t n, double mean) -> void {
 #pragma clang loop vectorize(enable) vectorize_width(8)
     for (size_t i = 0; i < n; ++i) {
         data[i] -= mean;
