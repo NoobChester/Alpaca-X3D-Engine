@@ -21,18 +21,6 @@ IndentPPDirectives: AfterHash
 
 # Alignment
 AlignAfterOpenBracket: BlockIndent
-AlignConsecutiveAssignments:
-  Enabled: true
-  AcrossEmptyLines: false
-  AcrossComments: true
-  AlignCompound: true
-  PadOperators: true
-AlignConsecutiveDeclarations:
-  Enabled: true
-  AcrossEmptyLines: false
-  AcrossComments: false
-  AlignCompound: true
-  PadOperators: true
 AlignTrailingComments: true
 
 # Return Type and Bracing (Strict for mission-critical code)
