@@ -2,9 +2,10 @@ name: Pedantic Checks
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, boilerplate]
   pull_request:
-    branches: [main, master]
+    branches: [main, boilerplate]
+  workflow_dispatch:
 
 jobs:
   cpp-checks:
