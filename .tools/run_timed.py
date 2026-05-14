@@ -26,7 +26,8 @@ def main() -> None:
     returncode = subprocess.call(command, shell=True)
     elapsed = int((time.time() - start) * 1000)
 
-    print(f"PASS: {tool_name} [{elapsed} ms]")
+    status = "PASS" if returncode == 0 else "FAIL"
+    print(f"{status}: {tool_name} [{elapsed} ms]")
     sys.exit(returncode)
 
 

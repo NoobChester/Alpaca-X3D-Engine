@@ -7,7 +7,11 @@
 
 # Detect python: use activated venv if $$VIRTUAL_ENV is set,
 # otherwise fall back to venv/ directory or system python.
-PYTHON := $(shell python .tools/find_python.py)
+ifeq ($(OS),Windows_NT)
+	PYTHON := $(shell python .tools/find_python.py)
+else
+	PYTHON := $(shell python3 .tools/find_python.py 2>/dev/null || python .tools/find_python.py)
+endif
 
 PY_FILES := $(shell $(PYTHON) .tools/discover_py_files.py)
 CPP_FILES := $(shell $(PYTHON) .tools/discover_cpp_files.py)
@@ -119,7 +123,11 @@ py-all:
 
 ## Install development dependencies
 setup:
+	@echo "Using Python: $(PYTHON)"
+	@echo "Creating virtual environment..."
+	$(PYTHON) -m venv venv
 	@echo "Installing development dependencies..."
+	$(PYTHON) -m pip install --upgrade pip
 	$(PYTHON) -m pip install -r requirements.txt
 	@echo "Installing pre-commit hook..."
 	$(PYTHON) -m pre_commit install
@@ -141,7 +149,7 @@ build:
 ## Remove build artifacts and caches (cross-platform)
 clean:
 	@echo "Cleaning build artifacts and caches..."
-	cmake -E rm -rf .mypy_cache .cache .ruff_cache build
+	cmake -E rm -rf .mypy_cache .cache .ruff_cache build venv
 	cmake -E rm -f engine.pyd engine.pyi
 	@echo "Done."
 

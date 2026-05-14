@@ -23,11 +23,6 @@ jobs:
         with:
           path: |
             /var/cache/apt/archives
-            /usr/bin/cmake
-            /usr/bin/ninja
-            /usr/bin/clang-format
-            /usr/bin/clang-tidy
-            /usr/bin/cppcheck
           key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/pedantic.yml') }}
           restore-keys: |
             ${{ runner.os }}-apt-

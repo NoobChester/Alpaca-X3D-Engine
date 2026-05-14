@@ -78,7 +78,7 @@ pre-commit                  # On staged files only
 pre-commit install          # Register the commit hook in .git/hooks
 ```
 
-**Note:** On Windows, ensure C++ tools are in PATH. See the "Setting up C++ Tools on Windows" section above for setup instructions.
+**Note:** On Windows, ensure C++ tools are in PATH. See the "Setting up C++ Tools on Windows" section below for setup instructions.
 
 ### Fail-Fast Strategy
 
