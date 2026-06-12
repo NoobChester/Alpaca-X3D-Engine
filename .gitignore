@@ -3,3 +3,4 @@ CMakeFiles
 engine.pyd
 engine.pyi
 .cache
+**/__pycache__

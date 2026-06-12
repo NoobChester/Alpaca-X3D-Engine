@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build
-          key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'engine.cpp') }}
+          key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'src/engine/engine.cpp') }}
           restore-keys: |
             ${{ runner.os }}-cmake-build-
 
@@ -84,22 +84,22 @@ jobs:
       - name: Run Python format check (ruff)
         run: |
           echo "[1/4] Running ruff format (Python style check)..."
-          python -m ruff format --check --diff trading_bot.py test_error.py .tools/*.py
+          python -m ruff format --check --diff src/engine/*.py tests/*.py .tools/*.py
 
       - name: Run Python linting (ruff check)
         run: |
           echo "[2/4] Running ruff check (Python linting)..."
-          python -m ruff check trading_bot.py test_error.py .tools/*.py
+          python -m ruff check src/engine/*.py tests/*.py .tools/*.py
 
       - name: Run Python type check (mypy)
         run: |
           echo "[3/4] Running mypy (Python type check)..."
-          python -m mypy trading_bot.py test_error.py
+          python -m mypy src/engine/*.py tests/*.py
 
       - name: Run Python static analysis (pylint)
         run: |
           echo "[4/4] Running pylint (Python static analysis)..."
-          python -m pylint trading_bot.py test_error.py
+          python -m pylint src/engine/*.py tests/*.py
 
   pedantic-summary:
     runs-on: ubuntu-latest

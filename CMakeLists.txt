@@ -46,7 +46,7 @@ execute_process(
 
 find_package(nanobind CONFIG REQUIRED PATHS "${nanobind_DIR}" NO_DEFAULT_PATH)
 
-nanobind_add_module(engine engine.cpp)
+nanobind_add_module(engine src/engine/engine.cpp)
 
 # --- 4. Target & Zen 5 Optimization ---
 target_compile_options(engine PRIVATE
@@ -79,7 +79,7 @@ target_compile_options(engine PRIVATE
 target_link_libraries(engine PRIVATE Python::Module)
 
 # --- 5. Generate Python Type Stubs from C++ Source ---
-# Automatically generates engine.pyi from engine.cpp for Pylance
+# Automatically generates engine.pyi from the packaged C++ source for Pylance
 set(ENGINE_PYI_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/engine.pyi")
 
 add_custom_command(
@@ -93,19 +93,23 @@ add_custom_command(
 add_custom_target(generate_stubs ALL DEPENDS "${ENGINE_PYI_OUTPUT}")
 
 # --- 6. Synchronization Target ---
-# Copy the generated artifacts into the workspace root for editor and test convenience.
+# Copy the generated artifacts into the src package for src-layout imports.
+set(ENGINE_PACKAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/engine")
+
 add_custom_target(sync_engine_pyi ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ENGINE_PACKAGE_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${ENGINE_PYI_OUTPUT}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyi"
-    COMMENT "Copying engine.pyi into the workspace root"
+    "${ENGINE_PACKAGE_DIR}/engine.pyi"
+    COMMENT "Copying engine.pyi into src/engine"
 )
 
 add_custom_target(sync_engine_pyd ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ENGINE_PACKAGE_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:engine>
-    "${CMAKE_CURRENT_SOURCE_DIR}/engine.pyd"
-    COMMENT "Copying engine.pyd into the workspace root"
+    "${ENGINE_PACKAGE_DIR}/engine.pyd"
+    COMMENT "Copying engine.pyd into src/engine"
 )
 
 add_dependencies(sync_engine_pyi generate_stubs)

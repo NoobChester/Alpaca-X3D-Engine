@@ -7,7 +7,7 @@ import asyncio
 
 import numpy as np
 
-import engine  # Your compiled C++ module
+from . import engine  # Your compiled C++ module
 
 
 # ============================================

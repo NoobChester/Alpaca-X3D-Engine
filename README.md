@@ -155,7 +155,7 @@ For detailed setup instructions, editor integration, and troubleshooting, see ou
 ## 📜 Usage
 
 ```python
-import engine
+from engine import engine
 import numpy as np
 
 # Engine utilizes 512-bit vector paths (8x doubles per clock)
