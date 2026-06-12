@@ -1,0 +1,81 @@
+# Clang-Tidy configuration for Alpaca Project
+# Optimized for C++26 with Zen 5 (9800X3D) architecture
+
+---
+# Only run specific checks that work well with C++26 and nanobind
+# Disable compiler diagnostics that don't work with clang-cl syntax
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-narrowing-conversions,
+  -bugprone-easily-swappable-parameters,
+  performance-*,
+  -performance-no-int-to-ptr,
+  cert-*,
+  -cert-err58-cpp,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  -modernize-use-auto,
+  -clang-diagnostic-*,
+  -modernize-avoid-bind,
+  -cppcoreguidelines-pro-type-member-init
+
+# Treat warnings as errors
+WarningsAsErrors: "*"
+
+# Note: Unused includes are a compiler diagnostic, not a clang-tidy check.
+# Use clang compiler warnings separately if needed.
+
+# Compiler options for clang-cl
+CheckOptions:
+  # Use snake_case for functions and variables (matching existing code)
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberPrefix
+    value: ""
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterPrefix
+    value: ""
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalFunctionCase
+    value: lower_case
+  # Performance: Warn if a parameter could be passed by reference
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'std::simd|__m512|nb::ndarray|nanobind::ndarray'
+  # Performance: Specific for your 9800X3D's large L3 cache
+  - key: performance-move-const-arg
+    value: true
+  # Modernize: Allow auto for lambda parameters (C++20 feature)
+  - key: modernize-use-auto.LambdaParameterType
+    value: true
+  - key: modernize-use-auto.MinTypeNameLength
+    value: 5
+  - key: readability-make-member-function-const
+    value: true
+  # Catch large objects being captured by value
+  - key: performance-unnecessary-copy-initialization
+    value: true
+  # Performance: Specific to HFT/Trading
+  - key:             performance-inefficient-vector-operation.EnableLargeSourceEncoding
+    value:           true
+  - key:             performance-for-range-copy.WarnOnAllAutoCopies
+    value:           true
+  # Modernize: Ensure we use the most efficient type traits for C++26
+  - key:             modernize-type-traits.IgnoreMacros
+    value:           true
+...

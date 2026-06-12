@@ -1,0 +1,67 @@
+# Clang-Format configuration for Alpaca Project
+# Optimized for C++26 with clang-cl on Windows (Zen 5 / 9800X3D)
+
+---
+BasedOnStyle: Microsoft
+Language: Cpp
+Standard: Latest
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+NamespaceIndentation: None
+
+# Line Formatting
+ColumnLimit: 120
+LineEnding: LF
+IndentCaseLabels: true
+IndentGotoLabels: false  # goto discouraged in modern C++
+IndentPPDirectives: AfterHash
+
+# Alignment
+AlignAfterOpenBracket: BlockIndent
+AlignTrailingComments: true
+
+# Return Type and Bracing (Strict for mission-critical code)
+AlwaysBreakAfterReturnType: None
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+
+# Pointers/References/Qualifiers
+PointerAlignment: Left
+ReferenceAlignment: Left
+QualifierAlignment: Left
+
+# Includes
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^<ext/.*\.h>'
+    Priority:        2
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^<.*'
+    Priority:        3
+  - Regex:           '.*'
+    Priority:        4
+
+# Modern C++20/23/26 Enhancements
+Cpp11BracedListStyle: true
+SpaceAfterTemplateKeyword: false
+BinPackArguments: false
+BinPackParameters: false
+
+# More stable alternatives for high-version Clang
+AlwaysBreakTemplateDeclarations: Yes
+# Keeps the 'requires' clauses clean for C++20/23/26
+RequiresClausePosition: OwnLine
+# Prevents the "staircase" effect in complex template headers
+IndentWrappedFunctionNames: false
+
+# Prevents cramped template syntax
+SpacesInAngles: false
+SpaceBeforeRangeBasedForLoopColon: true
